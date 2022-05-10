@@ -35,7 +35,7 @@ class Matrix {
    * @param cols The number of columns
    *
    */
-  Matrix(int rows, int cols) {}
+  Matrix(int rows, int cols) : rows_(rows), cols_(cols) { linear_ = new T[rows * cols]; }
 
   /** The number of rows in the matrix */
   int rows_;
@@ -95,7 +95,7 @@ class Matrix {
    * Destroy a matrix instance.
    * TODO(P0): Add implementation
    */
-  virtual ~Matrix() = default;
+  virtual ~Matrix() { delete[] linear_; }
 };
 
 /**
@@ -112,19 +112,24 @@ class RowMatrix : public Matrix<T> {
    * @param rows The number of rows
    * @param cols The number of columns
    */
-  RowMatrix(int rows, int cols) : Matrix<T>(rows, cols) {}
+  RowMatrix(int rows, int cols) : Matrix<T>(rows, cols) {
+    data_ = new T *[rows];
+    for (int i = 0; i < rows; i++) {
+      data_[i] = this->linear_ + i * cols;
+    }
+  }
 
   /**
    * TODO(P0): Add implementation
    * @return The number of rows in the matrix
    */
-  int GetRowCount() const override { return 0; }
+  int GetRowCount() const override { return this->rows_; }
 
   /**
    * TODO(P0): Add implementation
    * @return The number of columns in the matrix
    */
-  int GetColumnCount() const override { return 0; }
+  int GetColumnCount() const override { return this->cols_; }
 
   /**
    * TODO(P0): Add implementation
@@ -139,7 +144,13 @@ class RowMatrix : public Matrix<T> {
    * @throws OUT_OF_RANGE if either index is out of range
    */
   T GetElement(int i, int j) const override {
-    throw NotImplementedException{"RowMatrix::GetElement() not implemented."};
+    if (i < 0 || i >= GetRowCount()) {
+      throw Exception(ExceptionType::OUT_OF_RANGE, "i out of range");
+    }
+    if (j < 0 || j >= GetColumnCount()) {
+      throw Exception(ExceptionType::OUT_OF_RANGE, "j out of range");
+    }
+    return data_[i][j];
   }
 
   /**
@@ -152,7 +163,15 @@ class RowMatrix : public Matrix<T> {
    * @param val The value to insert
    * @throws OUT_OF_RANGE if either index is out of range
    */
-  void SetElement(int i, int j, T val) override {}
+  void SetElement(int i, int j, T val) override {
+    if (i < 0 || i >= GetRowCount()) {
+      throw Exception(ExceptionType::OUT_OF_RANGE, "i out of range");
+    }
+    if (j < 0 || j >= GetColumnCount()) {
+      throw Exception(ExceptionType::OUT_OF_RANGE, "j out of range");
+    }
+    data_[i][j] = val;
+  }
 
   /**
    * TODO(P0): Add implementation
@@ -166,7 +185,13 @@ class RowMatrix : public Matrix<T> {
    * @throws OUT_OF_RANGE if `source` is incorrect size
    */
   void FillFrom(const std::vector<T> &source) override {
-    throw NotImplementedException{"RowMatrix::FillFrom() not implemented."};
+    int size = source.size();
+    if (size != GetColumnCount() * GetRowCount()) {
+      throw Exception(ExceptionType::OUT_OF_RANGE, "size out of range");
+    }
+    for (size_t i = 0; i < source.size(); i++) {
+      this->linear_[i] = source[i];
+    }
   }
 
   /**
@@ -174,7 +199,7 @@ class RowMatrix : public Matrix<T> {
    *
    * Destroy a RowMatrix instance.
    */
-  ~RowMatrix() override = default;
+  ~RowMatrix() override { delete[] data_; }
 
  private:
   /**
@@ -204,7 +229,18 @@ class RowMatrixOperations {
    */
   static std::unique_ptr<RowMatrix<T>> Add(const RowMatrix<T> *matrixA, const RowMatrix<T> *matrixB) {
     // TODO(P0): Add implementation
-    return std::unique_ptr<RowMatrix<T>>(nullptr);
+    if (matrixA->GetRowCount() != matrixB->GetRowCount() || matrixA->GetColumnCount() != matrixB->GetColumnCount()) {
+      return std::unique_ptr<RowMatrix<T>>(nullptr);
+    }
+    int rows = matrixA->GetRowCount();
+    int cols = matrixA->GetColumnCount();
+    std::unique_ptr<RowMatrix<T>> res(new RowMatrix<T>(rows, cols));
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        res->SetElement(i, j, matrixA->GetElement(i, j) + matrixB->GetElement(i, j));
+      }
+    }
+    return res;
   }
 
   /**
@@ -215,8 +251,23 @@ class RowMatrixOperations {
    * @return The result of matrix multiplication
    */
   static std::unique_ptr<RowMatrix<T>> Multiply(const RowMatrix<T> *matrixA, const RowMatrix<T> *matrixB) {
-    // TODO(P0): Add implementation
-    return std::unique_ptr<RowMatrix<T>>(nullptr);
+    if (matrixA->GetColumnCount() != matrixB->GetRowCount()) {
+      return std::unique_ptr<RowMatrix<T>>(nullptr);
+    }
+    int rows = matrixA->GetRowCount();
+    int cols = matrixB->GetColumnCount();
+    int mul = matrixA->GetColumnCount();
+    std::unique_ptr<RowMatrix<T>> res(new RowMatrix<T>(rows, cols));
+    for (int i = 0; i < rows; ++i) {
+      for (int j = 0; j < cols; ++j) {
+        int sum = 0;
+        for (int k = 0; k < mul; ++k) {
+          sum += matrixA->GetElement(i, k) * matrixB->GetElement(k, j);
+        }
+        res->SetElement(i, j, sum);
+      }
+    }
+    return res;
   }
 
   /**
@@ -230,7 +281,12 @@ class RowMatrixOperations {
   static std::unique_ptr<RowMatrix<T>> GEMM(const RowMatrix<T> *matrixA, const RowMatrix<T> *matrixB,
                                             const RowMatrix<T> *matrixC) {
     // TODO(P0): Add implementation
-    return std::unique_ptr<RowMatrix<T>>(nullptr);
+    //    return std::unique_ptr<RowMatrix<T>>(nullptr);
+    std::unique_ptr<RowMatrix<T>> mul = Multiply(matrixA, matrixB);
+    if (mul == nullptr) {
+      return std::unique_ptr<RowMatrix<T>>(nullptr);
+    }
+    return Add(mul.get(), matrixC);
   }
 };
 }  // namespace bustub

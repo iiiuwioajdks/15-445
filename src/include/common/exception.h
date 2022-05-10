@@ -113,4 +113,5 @@ class NotImplementedException : public Exception {
   explicit NotImplementedException(const std::string &msg) : Exception(ExceptionType::NOT_IMPLEMENTED, msg) {}
 };
 
+
 }  // namespace bustub

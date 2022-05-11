@@ -127,7 +127,8 @@ class BufferPoolManagerInstance : public BufferPoolManager {
   const uint32_t num_instances_ = 1;
   /** Index of this BPI in the parallel BPM (if present, otherwise just 0) */
   const uint32_t instance_index_ = 0;
-  /** Each BPI maintains its own counter for page_ids to hand out, must ensure they mod back to its instance_index_ */
+  /** Each BPI maintains its own counter for page_ids to hand out,
+   * must ensure they mod back to its instance_index_ */
   std::atomic<page_id_t> next_page_id_ = instance_index_;
 
   /** Array of buffer pool pages. */
@@ -142,7 +143,8 @@ class BufferPoolManagerInstance : public BufferPoolManager {
   Replacer *replacer_;
   /** List of free pages. */
   std::list<frame_id_t> free_list_;
-  /** This latch protects shared data structures. We recommend updating this comment to describe what it protects. */
+  /** This latch protects shared data structures.
+   * We recommend updating this comment to describe what it protects. */
   std::mutex latch_;
 };
 }  // namespace bustub

@@ -58,9 +58,8 @@ bool BufferPoolManagerInstance::FlushPgImp(page_id_t page_id) {
     return false;
   }
   frame_id_t frame_id = it->second;
-  Page *page = &pages_[frame_id];
-  disk_manager_->WritePage(page_id, page->GetData());
-  page->is_dirty_ = false;
+  disk_manager_->WritePage(page_id, pages_[frame_id].GetData());
+  pages_[frame_id].is_dirty_ = false;
   return true;
 }
 
@@ -98,23 +97,22 @@ Page *BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) {
     if (!v) {
       return nullptr;
     }
-    Page *page = &pages_[frame_id];
-    if (page->IsDirty()) {
-      disk_manager_->WritePage(page->page_id_, page->GetData());
+
+    if (pages_[frame_id].IsDirty()) {
+      disk_manager_->WritePage(pages_[frame_id].page_id_, pages_[frame_id].GetData());
     }
-    page_table_.erase(page->page_id_);
+    page_table_.erase(pages_[frame_id].page_id_);
   }
   auto new_page_id = AllocatePage();
-  Page *page = &pages_[frame_id];
-  page->ResetMemory();
+  pages_[frame_id].ResetMemory();
   page_table_[new_page_id] = frame_id;
-  page->page_id_ = new_page_id;
-  page->pin_count_ = 1;
+  pages_[frame_id].page_id_ = new_page_id;
+  pages_[frame_id].pin_count_ = 1;
   *page_id = new_page_id;
   // write back
-  disk_manager_->WritePage(new_page_id, page->GetData());
-  page->is_dirty_ = false;
-  return page;
+  disk_manager_->WritePage(new_page_id, pages_[frame_id].GetData());
+  pages_[frame_id].is_dirty_ = false;
+  return &pages_[frame_id];
 }
 
 // 功能：将页面从磁盘加载到内存
@@ -152,7 +150,7 @@ Page *BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) {
     page_table_.erase(pages_[frame_id].page_id_);
   }
   page_table_[page_id] = frame_id;
-
+  pages_[frame_id].ResetMemory();
   pages_[frame_id].is_dirty_ = false;
   pages_[frame_id].page_id_ = page_id;
   pages_[frame_id].pin_count_ = 1;
@@ -174,19 +172,19 @@ bool BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) {
     return true;
   }
   frame_id_t delframe_id = it->second;
-  Page *del_page = &pages_[delframe_id];
-  if (del_page->pin_count_ > 0) {
+  if (pages_[delframe_id].pin_count_ > 0) {
     // pinned
     return false;
   }
-  if (del_page->is_dirty_) {
-    disk_manager_->WritePage(del_page->page_id_, del_page->GetData());
+  if (pages_[delframe_id].is_dirty_) {
+    disk_manager_->WritePage(pages_[delframe_id].page_id_, pages_[delframe_id].GetData());
   }
   page_table_.erase(page_id);
-  del_page->ResetMemory();
-  del_page->pin_count_ = 0;
-  del_page->is_dirty_ = false;
-  del_page->page_id_ = INVALID_PAGE_ID;
+  replacer_->Pin(delframe_id);
+  pages_[delframe_id].ResetMemory();
+  pages_[delframe_id].pin_count_ = 0;
+  pages_[delframe_id].is_dirty_ = false;
+  pages_[delframe_id].page_id_ = INVALID_PAGE_ID;
   free_list_.push_front(delframe_id);
   DeallocatePage(page_id);
   return true;
@@ -201,15 +199,14 @@ bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) {
     return false;
   }
   frame_id_t frame_id = it->second;
-  Page *page = &pages_[frame_id];
-  if (page->pin_count_ == 0) {
+  if (pages_[frame_id].pin_count_ == 0) {
     return false;
   }
   if (is_dirty) {
-    page->is_dirty_ = true;
+    pages_[frame_id].is_dirty_ = true;
   }
-  page->pin_count_--;
-  if (page->pin_count_ == 0) {
+  pages_[frame_id].pin_count_--;
+  if (pages_[frame_id].pin_count_ == 0) {
     replacer_->Unpin(frame_id);
   }
   return true;

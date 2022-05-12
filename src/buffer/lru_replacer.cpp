@@ -15,52 +15,44 @@
 
 namespace bustub {
 
-LRUReplacer::LRUReplacer(size_t num_pages) { page_num_ = num_pages; }
+LRUReplacer::LRUReplacer(size_t num_pages) {
+  page_num_ = num_pages;
+//  std::pair<bool, std::list<frame_id_t>::iterator> null_data(false, list_.end());
+}
 
 LRUReplacer::~LRUReplacer() = default;
 
 bool LRUReplacer::Victim(frame_id_t *frame_id) {
-  mu_.lock();
+  std::lock_guard<std::mutex> lock(mu_);
   if (list_.empty()) {
-    mu_.unlock();
     return false;
   }
   *frame_id = list_.back();
   list_.pop_back();
-  mu_.unlock();
+  hash_[*frame_id].first = false;
   return true;
 }
 
 void LRUReplacer::Pin(frame_id_t frame_id) {
-  mu_.lock();
-  list_.remove(frame_id);
-//  list_.erase(std::find(list_.begin(), list_.end(), frame_id));
-  mu_.unlock();
+  std::lock_guard<std::mutex> lock(mu_);
+  if(hash_[frame_id].first) {
+    list_.erase(hash_[frame_id].second);
+    hash_[frame_id].first = false;
+  }
 }
 
 void LRUReplacer::Unpin(frame_id_t frame_id) {
-  mu_.lock();
-  std::list<frame_id_t>::iterator it = std::find(list_.begin(), list_.end(), frame_id);
-  if (it != list_.end()) {
-    // find
-    mu_.unlock();
-    return;
+  std::lock_guard<std::mutex> lock(mu_);
+  if(!hash_[frame_id].first) {
+    list_.push_front(frame_id);
+    hash_[frame_id].first = true;
+    hash_[frame_id].second = list_.begin();
   }
-  mu_.unlock();
-  while (Size() >= page_num_) {
-    list_.back();
-    list_.pop_back();
-  }
-  mu_.lock();
-  list_.push_front(frame_id);
-  mu_.unlock();
 }
 
 size_t LRUReplacer::Size() {
-  mu_.lock();
-  size_t size = list_.size();
-  mu_.unlock();
-  return size;
+  std::lock_guard<std::mutex> lock(mu_);
+  return list_.size();
 }
 
 }  // namespace bustub

@@ -6,7 +6,7 @@
 //
 // Identification: test/container/hash_table_page_test.cpp
 //
-// Copyright (c) 2015-2021, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2019, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -112,30 +112,6 @@ TEST(HashTablePageTest, BucketPageSampleTest) {
   remove("test.db");
   delete disk_manager;
   delete bpm;
-}
-
-TEST(HashTablePageTest, Mytest) {
-  DiskManager *disk_manager = new DiskManager("test.db");
-  auto *bpm = new BufferPoolManagerInstance(5, disk_manager);
-
-  // get a directory page from the BufferPoolManager
-  //  page_id_t directory_page_id = INVALID_PAGE_ID;
-  //  auto directory_page =
-  //      reinterpret_cast<HashTableDirectoryPage *>(bpm->NewPage(&directory_page_id, nullptr)->GetData());
-  //  directory_page->SetBucketPageId(1, 10);
-  //  int idx = directory_page->GetBucketPageId(1);
-
-  page_id_t bucket_page_id = INVALID_PAGE_ID;
-  auto bucket_page = reinterpret_cast<HashTableBucketPage<int, int, IntComparator> *>(
-      bpm->NewPage(&bucket_page_id, nullptr)->GetData());
-  std::cout << bucket_page->IsEmpty() << std::endl;
-  //  for(int i = 0; i < 20; i++) {
-  bucket_page->Insert(1, 1, IntComparator());
-  std::cout << bucket_page->IsEmpty() << std::endl;
-  //  }
-  //  std::cout<<bucket_page->IsFull()<<std::endl;
-  bucket_page->Remove(1, 1, IntComparator());
-  std::cout << bucket_page->IsEmpty() << std::endl;
 }
 
 // NOLINTNEXTLINE

@@ -71,7 +71,7 @@ Page *ParallelBufferPoolManager::NewPgImp(page_id_t *page_id) {
   std::lock_guard<std::mutex> guard(latch_);
   auto tmp = start_index_;
   while (true) {
-    Page* page;
+    Page *page;
     page = buffer_pools_[start_index_]->NewPage(page_id);
     if (page != nullptr) {
       return page;

@@ -482,159 +482,159 @@ TEST(HashTableTest, GrowShrinkTest) {
   GenericTestCall<GenericKey<64>, RID, GenericComparator<64>>(GrowShrinkTestCall);
 }
 
-// TEST(HashTableTest, IntegratedConcurrencyTest) {
-//  const int num_threads = 5;
-//  const int num_runs = 50;
-//
-//  for (int run = 0; run < num_runs; run++) {
-//    auto *disk_manager = new DiskManager("test.db");
-//    auto *bpm = new BufferPoolManagerInstance(50, disk_manager);
-//
-//    ExtendibleHashTable<int, int, IntComparator> *ht =
-//        new ExtendibleHashTable<int, int, IntComparator>("blah", bpm, IntComparator(), HashFunction<int>());
-//    std::vector<std::thread> threads(num_threads);
-//
-//    for (int tid = 0; tid < num_threads; tid++) {
-//      threads[tid] = std::thread([&ht, tid]() {
-//        ht->Insert(nullptr, tid, tid);
-//        std::vector<int> res;
-//        ht->GetValue(nullptr, tid, &res);
-//        EXPECT_EQ(1, res.size()) << "Failed to insert " << tid << std::endl;
-//        EXPECT_EQ(tid, res[0]);
-//      });
-//    }
-//
-//    for (int i = 0; i < num_threads; i++) {
-//      threads[i].join();
-//    }
-//
-//    threads.clear();
-//
-//    threads.resize(num_threads);
-//    for (int tid = 0; tid < num_threads; tid++) {
-//      threads[tid] = std::thread([&ht, tid]() {
-//        ht->Remove(nullptr, tid, tid);
-//        std::vector<int> res;
-//        ht->GetValue(nullptr, tid, &res);
-//        EXPECT_EQ(0, res.size());
-//      });
-//    }
-//
-//    for (int i = 0; i < num_threads; i++) {
-//      threads[i].join();
-//    }
-//
-//    threads.clear();
-//
-//    threads.resize(num_threads);
-//    for (int tid = 0; tid < num_threads; tid++) {
-//      threads[tid] = std::thread([&ht, tid]() {
-//        // LOG_DEBUG("thread %d\n",tid);
-//        ht->Insert(nullptr, 1, tid);
-//        std::vector<int> res;
-//        ht->GetValue(nullptr, 1, &res);
-//        bool found = false;
-//        for (auto r : res) {
-//          if (r == tid) {
-//            found = true;
-//          }
-//        }
-//        EXPECT_EQ(true, found);
-//      });
-//    }
-//
-//    for (int i = 0; i < num_threads; i++) {
-//      threads[i].join();
-//    }
-//
-//    std::vector<int> res;
-//    ht->GetValue(nullptr, 1, &res);
-//
-//    EXPECT_EQ(num_threads, res.size());
-//
-//    delete ht;
-//    disk_manager->ShutDown();
-//    remove("test.db");
-//    delete disk_manager;
-//    delete bpm;
-//  }
-//}
-//
-// TEST(HashTableTest, GrowShrinkConcurrencyTest) {
-//  const int num_threads = 5;
-//  const int num_runs = 50;
-//
-//  for (int run = 0; run < num_runs; run++) {
-//    auto *disk_manager = new DiskManager("test.db");
-//    auto *bpm = new BufferPoolManagerInstance(50, disk_manager);
-//    ExtendibleHashTable<int, int, IntComparator> *ht =
-//        new ExtendibleHashTable<int, int, IntComparator>("blah", bpm, IntComparator(), HashFunction<int>());
-//    std::vector<std::thread> threads(num_threads);
-//
-//    for (int tid = 0; tid < num_threads; tid++) {
-//      threads[tid] = std::thread([&ht, tid]() {
-//        for (int i = num_threads * tid; i < num_threads * (tid + 1); i++) {
-//          ht->Insert(nullptr, i, i);
-//          std::vector<int> res;
-//          ht->GetValue(nullptr, i, &res);
-//          EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
-//          EXPECT_EQ(i, res[0]);
-//        }
-//      });
-//    }
-//
-//    for (int i = 0; i < num_threads; i++) {
-//      threads[i].join();
-//    }
-//
-//    threads.clear();
-//
-//    threads.resize(num_threads);
-//    for (int tid = 0; tid < num_threads; tid++) {
-//      threads[tid] = std::thread([&ht, tid]() {
-//        for (int i = num_threads * tid; i < num_threads * (tid + 1); i++) {
-//          std::vector<int> res;
-//          ht->GetValue(nullptr, i, &res);
-//          EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
-//          EXPECT_EQ(i, res[0]);
-//        }
-//      });
-//    }
-//
-//    for (int i = 0; i < num_threads; i++) {
-//      threads[i].join();
-//    }
-//
-//    threads.clear();
-//
-//    threads.resize(num_threads);
-//    for (int tid = 0; tid < num_threads; tid++) {
-//      threads[tid] = std::thread([&ht, tid]() {
-//        for (int i = num_threads * tid; i < num_threads * (tid + 1); i++) {
-//          ht->Insert(nullptr, i, i);
-//          std::vector<int> res;
-//          ht->GetValue(nullptr, i, &res);
-//          EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
-//        }
-//        for (int i = num_threads * tid; i < num_threads * (tid + 1); i++) {
-//          ht->Remove(nullptr, i, i);
-//          std::vector<int> res;
-//          ht->GetValue(nullptr, i, &res);
-//          EXPECT_EQ(0, res.size()) << "Failed to insert " << tid << std::endl;
-//        }
-//      });
-//    }
-//
-//    for (int i = 0; i < num_threads; i++) {
-//      threads[i].join();
-//    }
-//
-//    threads.clear();
-//    delete ht;
-//    disk_manager->ShutDown();
-//    remove("test.db");
-//    delete disk_manager;
-//    delete bpm;
-//  }
-//}
+TEST(HashTableTest, IntegratedConcurrencyTest) {
+  const int num_threads = 5;
+  const int num_runs = 50;
+
+  for (int run = 0; run < num_runs; run++) {
+    auto *disk_manager = new DiskManager("test.db");
+    auto *bpm = new BufferPoolManagerInstance(50, disk_manager);
+
+    ExtendibleHashTable<int, int, IntComparator> *ht =
+        new ExtendibleHashTable<int, int, IntComparator>("blah", bpm, IntComparator(), HashFunction<int>());
+    std::vector<std::thread> threads(num_threads);
+
+    for (int tid = 0; tid < num_threads; tid++) {
+      threads[tid] = std::thread([&ht, tid]() {
+        ht->Insert(nullptr, tid, tid);
+        std::vector<int> res;
+        ht->GetValue(nullptr, tid, &res);
+        EXPECT_EQ(1, res.size()) << "Failed to insert " << tid << std::endl;
+        EXPECT_EQ(tid, res[0]);
+      });
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+      threads[i].join();
+    }
+
+    threads.clear();
+
+    threads.resize(num_threads);
+    for (int tid = 0; tid < num_threads; tid++) {
+      threads[tid] = std::thread([&ht, tid]() {
+        ht->Remove(nullptr, tid, tid);
+        std::vector<int> res;
+        ht->GetValue(nullptr, tid, &res);
+        EXPECT_EQ(0, res.size());
+      });
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+      threads[i].join();
+    }
+
+    threads.clear();
+
+    threads.resize(num_threads);
+    for (int tid = 0; tid < num_threads; tid++) {
+      threads[tid] = std::thread([&ht, tid]() {
+        // LOG_DEBUG("thread %d\n",tid);
+        ht->Insert(nullptr, 1, tid);
+        std::vector<int> res;
+        ht->GetValue(nullptr, 1, &res);
+        bool found = false;
+        for (auto r : res) {
+          if (r == tid) {
+            found = true;
+          }
+        }
+        EXPECT_EQ(true, found);
+      });
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+      threads[i].join();
+    }
+
+    std::vector<int> res;
+    ht->GetValue(nullptr, 1, &res);
+
+    EXPECT_EQ(num_threads, res.size());
+
+    delete ht;
+    disk_manager->ShutDown();
+    remove("test.db");
+    delete disk_manager;
+    delete bpm;
+  }
+}
+
+TEST(HashTableTest, GrowShrinkConcurrencyTest) {
+  const int num_threads = 5;
+  const int num_runs = 50;
+
+  for (int run = 0; run < num_runs; run++) {
+    auto *disk_manager = new DiskManager("test.db");
+    auto *bpm = new BufferPoolManagerInstance(50, disk_manager);
+    ExtendibleHashTable<int, int, IntComparator> *ht =
+        new ExtendibleHashTable<int, int, IntComparator>("blah", bpm, IntComparator(), HashFunction<int>());
+    std::vector<std::thread> threads(num_threads);
+
+    for (int tid = 0; tid < num_threads; tid++) {
+      threads[tid] = std::thread([&ht, tid]() {
+        for (int i = num_threads * tid; i < num_threads * (tid + 1); i++) {
+          ht->Insert(nullptr, i, i);
+          std::vector<int> res;
+          ht->GetValue(nullptr, i, &res);
+          EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
+          EXPECT_EQ(i, res[0]);
+        }
+      });
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+      threads[i].join();
+    }
+
+    threads.clear();
+
+    threads.resize(num_threads);
+    for (int tid = 0; tid < num_threads; tid++) {
+      threads[tid] = std::thread([&ht, tid]() {
+        for (int i = num_threads * tid; i < num_threads * (tid + 1); i++) {
+          std::vector<int> res;
+          ht->GetValue(nullptr, i, &res);
+          EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
+          EXPECT_EQ(i, res[0]);
+        }
+      });
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+      threads[i].join();
+    }
+
+    threads.clear();
+
+    threads.resize(num_threads);
+    for (int tid = 0; tid < num_threads; tid++) {
+      threads[tid] = std::thread([&ht, tid]() {
+        for (int i = num_threads * tid; i < num_threads * (tid + 1); i++) {
+          ht->Insert(nullptr, i, i);
+          std::vector<int> res;
+          ht->GetValue(nullptr, i, &res);
+          EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
+        }
+        for (int i = num_threads * tid; i < num_threads * (tid + 1); i++) {
+          ht->Remove(nullptr, i, i);
+          std::vector<int> res;
+          ht->GetValue(nullptr, i, &res);
+          EXPECT_EQ(0, res.size()) << "Failed to insert " << tid << std::endl;
+        }
+      });
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+      threads[i].join();
+    }
+
+    threads.clear();
+    delete ht;
+    disk_manager->ShutDown();
+    remove("test.db");
+    delete disk_manager;
+    delete bpm;
+  }
+}
 }  // namespace bustub

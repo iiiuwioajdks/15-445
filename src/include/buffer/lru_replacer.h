@@ -14,8 +14,9 @@
 
 #include <list>
 #include <mutex>  // NOLINT
-#include <vector>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "buffer/replacer.h"
 #include "common/config.h"

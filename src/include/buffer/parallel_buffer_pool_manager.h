@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <mutex>
+#include <mutex>  // NOLINT
 #include "buffer/buffer_pool_manager.h"
 #include "buffer/buffer_pool_manager_instance.h"
 #include "recovery/log_manager.h"

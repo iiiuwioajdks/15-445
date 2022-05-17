@@ -17,7 +17,7 @@ namespace bustub {
 
 LRUReplacer::LRUReplacer(size_t num_pages) {
   page_num_ = num_pages;
-//  std::pair<bool, std::list<frame_id_t>::iterator> null_data(false, list_.end());
+  //  std::pair<bool, std::list<frame_id_t>::iterator> null_data(false, list_.end());
 }
 
 LRUReplacer::~LRUReplacer() = default;
@@ -35,7 +35,7 @@ bool LRUReplacer::Victim(frame_id_t *frame_id) {
 
 void LRUReplacer::Pin(frame_id_t frame_id) {
   std::lock_guard<std::mutex> lock(mu_);
-  if(hash_[frame_id].first) {
+  if (hash_[frame_id].first) {
     list_.erase(hash_[frame_id].second);
     hash_[frame_id].first = false;
   }
@@ -43,7 +43,7 @@ void LRUReplacer::Pin(frame_id_t frame_id) {
 
 void LRUReplacer::Unpin(frame_id_t frame_id) {
   std::lock_guard<std::mutex> lock(mu_);
-  if(!hash_[frame_id].first) {
+  if (!hash_[frame_id].first) {
     list_.push_front(frame_id);
     hash_[frame_id].first = true;
     hash_[frame_id].second = list_.begin();

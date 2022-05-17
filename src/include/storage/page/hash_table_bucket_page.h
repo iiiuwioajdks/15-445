@@ -137,10 +137,16 @@ class HashTableBucketPage {
    */
   void PrintBucket();
 
+  void Reset();
+
  private:
   //  For more on BUCKET_ARRAY_SIZE see storage/page/hash_table_page_defs.h
+  // 1个char的大小是1byte，也就是8bit，两个数组用第i位表示key-value数组的第i个位置是否被占用/可读，
+  // 而这几个标记数组中每8个位置就凑成一个char，所以我们在查询某个位置是否被占用/可读的时候，
+  // 要先将其映射到对应的char中，然后通过位运算对8个bit中指定的bit进行操作
   char occupied_[(BUCKET_ARRAY_SIZE - 1) / 8 + 1];
   // 0 if tombstone/brand new (never occupied), 1 otherwise.
+  // 如果墓碑/全新的（从未被占用），则为0，否则为1。
   char readable_[(BUCKET_ARRAY_SIZE - 1) / 8 + 1];
   MappingType array_[0];
 };

@@ -121,6 +121,7 @@ TEST(BufferPoolManagerInstanceTest, SampleTest) {
   }
   for (int i = 0; i < 4; ++i) {
     EXPECT_NE(nullptr, bpm->NewPage(&page_id_temp));
+    //    std::cout<<page_id_temp<<std::endl;
   }
 
   // Scenario: We should be able to fetch the data we wrote a while ago.
@@ -130,6 +131,7 @@ TEST(BufferPoolManagerInstanceTest, SampleTest) {
   // now be pinned. Fetching page 0 should fail.
   EXPECT_EQ(true, bpm->UnpinPage(0, true));
   EXPECT_NE(nullptr, bpm->NewPage(&page_id_temp));
+  std::cout << page_id_temp << std::endl;
   EXPECT_EQ(nullptr, bpm->FetchPage(0));
 
   // Shutdown the disk manager and remove the temporary file we created.

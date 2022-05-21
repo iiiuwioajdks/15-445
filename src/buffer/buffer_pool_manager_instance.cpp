@@ -109,6 +109,7 @@ Page *BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) {
   pages_[frame_id].page_id_ = new_page_id;
   pages_[frame_id].pin_count_ = 1;
   *page_id = new_page_id;
+  //  std::cout<<*page_id<<" : "<<frame_id<<std::endl;
   // write back
   disk_manager_->WritePage(new_page_id, pages_[frame_id].GetData());
   pages_[frame_id].is_dirty_ = false;

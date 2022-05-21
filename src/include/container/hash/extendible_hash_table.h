@@ -136,7 +136,9 @@ class ExtendibleHashTable {
    * @param bucket_page_id the page_id to fetch
    * @return a pointer to a bucket page
    */
-  HASH_TABLE_BUCKET_TYPE *FetchBucketPage(page_id_t bucket_page_id);
+  Page *FetchBucketPage(page_id_t bucket_page_id);
+
+  HASH_TABLE_BUCKET_TYPE *GetHashBucketPage(Page *page);
 
   /**
    * Performs insertion with an optional bucket splitting.
@@ -171,6 +173,7 @@ class ExtendibleHashTable {
   // Readers includes inserts and removes, writers are splits and merges
   ReaderWriterLatch table_latch_;
   HashFunction<KeyType> hash_fn_;
+  std::mutex dir_latch_;
 };
 
 }  // namespace bustub

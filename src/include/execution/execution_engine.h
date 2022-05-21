@@ -66,6 +66,7 @@ class ExecutionEngine {
       }
     } catch (Exception &e) {
       // TODO(student): handle exceptions
+      std::cout << "ww:" << e.what() << std::endl;
     }
 
     return true;

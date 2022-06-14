@@ -30,7 +30,19 @@ void UpdateExecutor::Init() {
 bool UpdateExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
   auto indexes = exec_ctx_->GetCatalog()->GetTableIndexes(table_info_->name_);
   auto txn = exec_ctx_->GetTransaction();
+  auto lock_man = exec_ctx_->GetLockManager();
+
   while (child_executor_->Next(tuple, rid)) {
+    if (lock_man != nullptr) {
+      if (txn->GetIsolationLevel() != IsolationLevel::READ_UNCOMMITTED) {
+        if (txn->IsSharedLocked(*rid)) {
+          lock_man->LockUpgrade(txn, *rid);
+        } else {
+          lock_man->LockExclusive(txn, *rid);
+          //          std::cout<<rid->ToString()<<std::endl;
+        }
+      }
+    }
     auto udp_tuple = GenerateUpdatedTuple(*tuple);
     table_heap_->UpdateTuple(udp_tuple, *rid, txn);
     for (auto index : indexes) {
@@ -40,6 +52,10 @@ bool UpdateExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
       index->index_->InsertEntry(
           tuple->KeyFromTuple(table_info_->schema_, *index->index_->GetKeySchema(), index->index_->GetKeyAttrs()), *rid,
           txn);
+      IndexWriteRecord write_record(*rid, table_info_->oid_, WType::DELETE, udp_tuple, index->index_oid_,
+                                    exec_ctx_->GetCatalog());
+      write_record.old_tuple_ = *tuple;
+      txn->GetIndexWriteSet()->emplace_back(write_record);
     }
   }
   return false;

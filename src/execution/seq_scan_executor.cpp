@@ -12,6 +12,7 @@
 
 #include <sstream>
 
+#include "concurrency/transaction.h"
 #include "execution/executors/seq_scan_executor.h"
 #include "execution/expressions/comparison_expression.h"
 #include "execution/expressions/constant_value_expression.h"
@@ -23,7 +24,6 @@ SeqScanExecutor::SeqScanExecutor(ExecutorContext *exec_ctx, const SeqScanPlanNod
     : AbstractExecutor(exec_ctx), plan_(plan), cur_(nullptr, RID{}, nullptr) {
   table_info_ = exec_ctx_->GetCatalog()->GetTable(plan_->GetTableOid());
 
-  out_schema_idx_.reserve(plan_->OutputSchema()->GetColumnCount());
   try {
     for (uint32_t i = 0; i < plan_->OutputSchema()->GetColumnCount(); i++) {
       auto col_name = plan_->OutputSchema()->GetColumn(i).GetName();
@@ -54,8 +54,21 @@ SeqScanExecutor::~SeqScanExecutor() {
 void SeqScanExecutor::Init() { cur_ = table_info_->table_->Begin(exec_ctx_->GetTransaction()); }
 
 bool SeqScanExecutor::Next(Tuple *tuple, RID *rid) {
+  auto lock_man = GetExecutorContext()->GetLockManager();
+  auto txn = GetExecutorContext()->GetTransaction();
+
   while (cur_ != table_info_->table_->End()) {
     auto temp = cur_++;
+    out_schema_idx_.reserve(plan_->OutputSchema()->GetColumnCount());
+
+    if (lock_man != nullptr) {
+      if (txn->GetIsolationLevel() != IsolationLevel::READ_UNCOMMITTED) {
+        if (!txn->IsSharedLocked(temp->GetRid()) && !txn->IsExclusiveLocked(temp->GetRid())) {
+          lock_man->LockShared(txn, temp->GetRid());
+        }
+      }
+    }
+
     auto value = predicate_->Evaluate(&(*temp), &table_info_->schema_);
     if (value.GetAs<bool>()) {
       // Only keep the columns of the out schema
@@ -66,7 +79,14 @@ bool SeqScanExecutor::Next(Tuple *tuple, RID *rid) {
       }
       *tuple = Tuple(values, plan_->OutputSchema());
       *rid = temp->GetRid();
+
+      if (lock_man != nullptr && txn->GetIsolationLevel() == IsolationLevel::READ_COMMITTED) {
+        lock_man->Unlock(txn, temp->GetRid());
+      }
       return true;
+    }
+    if (lock_man != nullptr) {
+      lock_man->Unlock(txn, temp->GetRid());
     }
   }
   return false;

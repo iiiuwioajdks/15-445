@@ -104,6 +104,8 @@ class LockManager {
    */
   bool Unlock(Transaction *txn, const RID &rid);
 
+  void InsertIntoLockRequest(LockRequestQueue *lock_request, txn_id_t txn_id, LockMode lock_mode);
+
  private:
   std::mutex latch_;
 
